@@ -1,7 +1,7 @@
 -- @Author: Alan
 -- @Date:   2016-11-07 16:36:12
 -- @Last Modified by:   Alan
--- @Last Modified time: 2016-11-07 20:19:06
+-- @Last Modified time: 2016-11-07 20:45:32
 
 --[[
 函数是一种对语句和表达式进行抽象的主要机制
@@ -76,3 +76,19 @@ printArgValue(1, 2, 3, 4, 5)
 print ('**********')
 
 -- named arguments
+--[[
+通过名称来指定实参是很有用的，
+os.rename(),这个函数用于文件改名，
+通常会忘记一个参数是表示新文件名还是旧文件名
+希望这个函数可以接受两个具有名称的实参，列如：
+-- 无效的代码
+rename(old="temp.lua", new="temp1.lua")
+Lua并不直接支持这种语法，但可以通过一种细微的改变来获得相同的效果。
+另外，还需要用到一种Lua中特殊的函数调用语法，就是当实参只有一个table构造式时，
+函数调用中的圆括号是可有可无的：
+rename{old="temp.lua", new="temp1.lua"}
+此外，将rename改为只接受一个参数，并从这个参数中获取实际的参数：
+function rename(arg)
+	return os.rename(arg.old, arg.new)
+end
+--]]
