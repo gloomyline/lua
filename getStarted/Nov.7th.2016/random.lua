@@ -1,7 +1,7 @@
 -- @Author: Alan
 -- @Date:   2016-11-07 15:55:39
 -- @Last Modified by:   Alan
--- @Last Modified time: 2016-11-07 16:09:37
+-- @Last Modified time: 2016-11-14 14:50:23
 
 -- notice Lua random
 print ('*****1*****')
