@@ -1,7 +1,7 @@
 -- @Author: Alan
 -- @Date:   2016-11-15 23:44:03
 -- @Last Modified by:   Alan
--- @Last Modified time: 2016-11-16 01:09:44
+-- @Last Modified time: 2016-11-16 01:33:42
 -----------------------------------------------------------------------------------------
 --
 -- main.lua
@@ -31,8 +31,7 @@ background.y = cy
 local platform = display.newImageRect('assets/platform.png', 300, 50)
 platform.x = cx
 platform.y = sH - 25
-physics.addBody(platform, 'static')
-platform.myName = 'platform'
+physics.addBody(platform, 'static', {bounce = 0})
 
 -- textfiled
 local tapCount = 0
@@ -46,8 +45,7 @@ local balloon = display.newImageRect('assets/balloon.png', 112, 112)
 balloon.x = cx
 balloon.y = cy
 balloon.alpha = 0.8
-physics.addBody(balloon, 'dynamic', {radius = 55, bounce = 0.3})
-balloon.myName = 'balloon'
+physics.addBody(balloon, 'dynamic', {radius = 55, bounce = 0})
 
 local function pushBalloon(  )
 	balloon:applyLinearImpulse(0, -0.75, balloon.x, balloon.y)
@@ -57,6 +55,11 @@ end
 balloon:addEventListener('tap', pushBalloon)
 
 local function showGameOver()
+	-- if _G[gameOverPanel] then
+	-- 	print '1111'
+	-- 	return
+	-- end
+
 	local gameOverPanel = display.newGroup()
 	gameOverPanel.x = cx 
 	gameOverPanel.y = cy - 80
@@ -66,6 +69,13 @@ local function showGameOver()
 	local gameOverTxt = display.newText('GAME OVER', 0, -20, native.systemFont, 20)
 	gameOverPanel:insert(gameOverTxt)
 
+	local function restartGame()
+		tapCount = 0
+		tapText.text = tapCount
+		balloon.y = cy
+		balloon:addEventListener('tap', pushBalloon)
+	end
+
 	local function handleButtonEvent(event)
 		if (event.phase == 'began') then
 			print ('button was tapped!')
@@ -74,10 +84,7 @@ local function showGameOver()
 				display.remove(gameOverPanel) 
 				gameOverPanel = nil
 				-- gameOverPanel:removeSelf()
-				tapCount = 0
-				tapText.text = tapCount
-				balloon.y = cy
-				balloon:addEventListener('tap', pushBalloon)
+				restartGame()
 			end
 		end
 	end
@@ -94,23 +101,17 @@ local function showGameOver()
 	gameOverPanel:insert(restartBtn) 
 end
 
+-- simple collision detect between balloon and platform
 local function onLocalCollision( self, event )
     if ( event.phase == "began" ) then
-        -- print( self.myName .. ": collision began with " .. event.other.myName )
         showGameOver()
         balloon:removeEventListener('tap', pushBalloon)
     end
-
-    -- elseif ( event.phase == "ended" ) then
-    --     print( self.myName .. ": collision ended with " .. event.other.myName )
-    -- end
 end
 
 platform.collision = onLocalCollision
 platform:addEventListener( "collision" )
 
--- balloon.collision = onLocalCollision
--- balloon:addEventListener( "collision" )
 
 
 
