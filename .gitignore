@@ -1,1 +1,3 @@
 ./docsets
+./demos/images
+./demos/BalloonTap/*.png
