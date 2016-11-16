@@ -211,7 +211,7 @@ local function isLevelUp(  )
 	if score >= levelUpScoresTable[curLevel] then
 		curLevel = curLevel + 1
 		levelText.text = 'Level:' .. curLevel
-		gameLoopTimer = timer.performWithDelay(1000 / curLevel, gameLoop, 0)
+		gameLoopTimer = timer.performWithDelay(1000 - curLevel * 100, gameLoop, 0)
 	end
 end
 
