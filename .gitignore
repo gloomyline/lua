@@ -1,3 +1,6 @@
-./docsets
-./demos/images
-./demos/BalloonTap/*.png
+.gitignore
+/docsets/*
+/demos/images/*
+/demos/BalloonTap/*.png
+/demos/StarExplorer/audio/*
+/demos/StarExplorer/*.png

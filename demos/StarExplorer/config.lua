@@ -1,0 +1,33 @@
+application =
+{
+
+	content =
+	{
+		width = 768,
+		height = 1024, 
+		-- letterbox, zoomEven
+		scale = "zoomEven",
+		fps = 60,
+		
+		--[[
+		imageSuffix =
+		{
+			    ["@2x"] = 2,
+		},
+		--]]
+	},
+
+	--[[
+	-- Push notifications
+	notification =
+	{
+		iphone =
+		{
+			types =
+			{
+				"badge", "sound", "alert", "newsstand"
+			}
+		}
+	},
+	--]]    
+}
