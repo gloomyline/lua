@@ -12,6 +12,7 @@ local scene = composer.newScene()
 local json = require('json')
 local scoresTable = {}
 local filePath = system.pathForFile('scores.json', system.DocumentsDirectory)
+local bgMusic
 
 local function loadScores(  )
 	local file = io.open(filePath, 'r')
@@ -95,11 +96,11 @@ function scene:create( event )
 		if scoresTable[i] then
 			local yPos = 150 + (i * 50)
 
-			local rankNum = display.newText(sceneGroup, tostring(i) .. ')', cX - 50, yPos, native.systemFont, 32)
+			local rankNum = display.newText(sceneGroup, tostring(i) .. ')', cX - 10, yPos, native.systemFont, 32)
 			rankNum:setFillColor(0.8)
 			rankNum.anchorX = 1
 
-			local thisScore = display.newText(sceneGroup, scoresTable[i], cX - 30, yPos, native.systemFont, 32)
+			local thisScore = display.newText(sceneGroup, scoresTable[i], cX + 10, yPos, native.systemFont, 32)
 			thisScore.anchorX = 0
 		end
 	end
@@ -113,6 +114,8 @@ function scene:create( event )
 	local menuBtn = display.newText(sceneGroup, 'Menu', cX, 810, native.systemFont, 36)
 	menuBtn:setFillColor(0.75, 0.78, 1)
 	menuBtn:addEventListener('tap', gotoMenu)
+
+	-- bgMusic = audio.loadStream('audio/Escape_Looping.wav')
 end
 
 
@@ -127,7 +130,7 @@ function scene:show( event )
 
 	elseif ( phase == "did" ) then
 		-- Code here runs when the scene is entirely on screen
-
+		bgMusic = sfx:play('bgHighScores', {loops = -1})
 	end
 end
 
@@ -141,9 +144,11 @@ function scene:hide( event )
 	if ( phase == "will" ) then
 		-- Code here runs when the scene is on screen (but is about to go off screen)
 
+
 	elseif ( phase == "did" ) then
 		-- Code here runs immediately after the scene goes entirely off screen
 
+		sfx:stop(bgMusic)
 	end
 end
 
@@ -153,7 +158,7 @@ function scene:destroy( event )
 
 	local sceneGroup = self.view
 	-- Code here runs prior to the removal of scene's view
-
+	audio.dispose(bgMusic)
 end
 
 

@@ -54,17 +54,33 @@ local sheetOptions =
 -- loading the sprite sheet
 local objectSheet = graphics.newImageSheet('assets/gameObjects.png', sheetOptions)
 
--- Initalizing Variables
-local lives = 3			
-local score = 0
-local died = false
+-- configure levelUp scores
+local levelUpScoresTable = {}
 
+-- initializing variables
+local lives = 3		
+local score = 0
+local curLevel = 1
+local levels = 5
+local died = false
+-- initializing the table to reserve the levelUp scores
+for i = 1, levels do
+	local len = #levelUpScoresTable
+	if i == 1 then
+		levelUpScoresTable[1] = 10
+	else
+		levelUpScoresTable[len + 1] = i * 10 + levelUpScoresTable[len]
+	end
+end
+
+-- reserve asteroids in the table
 local asteroidsTalbe = {}
 
 local ship
 local gameLoopTime
 local livesText 
 local scoreText
+local levelText
 
 local backGroup
 local mainGroup
@@ -119,7 +135,7 @@ end
 -- firing mechanics
 local function fireLaser()
 	-- play fire sound
-	audio.play(fireSound)
+	sfx:play('fireSound')
 
 	local newLaser = display.newImageRect(mainGroup, objectSheet, 5, 14, 40)
 	physics.addBody(newLaser, 'dynamic', {isSensor = true})
@@ -189,6 +205,16 @@ local function gameLoop()
 	end
 end
 
+-- detect level up
+local function isLevelUp(  )
+	if score >= levelUpScoresTable[#levelUpScoresTable] then return end
+	if score >= levelUpScoresTable[curLevel] then
+		curLevel = curLevel + 1
+		levelText.text = 'Level:' .. curLevel
+		gameLoopTimer = timer.performWithDelay(1000 / curLevel, gameLoop, 0)
+	end
+end
+
 -- collision handling
 
 -- restoring the ship
@@ -247,7 +273,8 @@ local function onCollision( event )
 			display.remove(obj2)
 
 			-- play explosion sound
-			audio.play(explosionSound)
+			-- audio.play(explosionSound)
+			sfx:play('explosionSound')
 
 			-- remove the asteroid from the table
 			for i = #asteroidsTalbe, 1, -1 do		-- iterate table to find the one needed remove
@@ -262,6 +289,7 @@ local function onCollision( event )
 			-- increase score
 			score = score + 1
 			scoreText.text = 'Score:' .. score
+			isLevelUp()
 		end
 
 		-- collision between ship and asteroid
@@ -270,6 +298,9 @@ local function onCollision( event )
 		then
 			if died == false then
 				died = true
+				-- audio.play(explosionSound)
+				sfx:play('explosionSound')
+			
 				-- updateLives
 				lives = lives - 1
 				livesText.text = 'Lives:' .. lives
@@ -319,7 +350,8 @@ function scene:create( event )
 
 	-- display lives and score
 	livesText = display.newText(uiGroup, 'Lives:' .. lives, 200, 80, native.systemFont, 36)
-	scoreText = display.newText(uiGroup, 'score:' .. score, 400, 80, native.systemFont, 36)
+	scoreText = display.newText(uiGroup, 'Score:' .. score, 400, 80, native.systemFont, 36)
+	levelText = display.newText(uiGroup, 'Level:' .. curLevel, 600, 80, native.systemFont, 36)
 
 	-- assign the ship 'tap' event to let the player actually fire lasers
 	ship:addEventListener('tap',fireLaser)
@@ -328,9 +360,9 @@ function scene:create( event )
 	ship:addEventListener('touch', dragShip)
 
 	-- load sounds about explosion and fire into game
-	explosionSound = audio.loadSound('audio/explosion.wav')
-	fireSound = audio.loadSound('audio/fire.wav')
-	bgMusic = audio.loadStream('audio/80s-Space-Game_Looping.wav')
+	-- explosionSound = audio.loadSound('audio/explosion.wav')
+	-- fireSound = audio.loadSound('audio/fire.wav')
+	-- bgMusic = audio.loadStream('audio/80s-Space-Game_Looping.wav')
 end
 
 
@@ -352,7 +384,8 @@ function scene:show( event )
 		gameLoopTimer = timer.performWithDelay(1000, gameLoop, 0)
 
 		-- start bgMusic
-		audio.play(bgMusic, {channel = 1, loops = 0})
+		-- audio.play(bgMusic, {channel = 1, loops = -1})
+		bgMusic = sfx:play('bgGame', {loops = -1})
 		
 	end
 end
@@ -374,7 +407,8 @@ function scene:hide( event )
 		physics.pause()
 
 		-- stop the music
-		audio.stop(1)
+		-- audio.stop(1)
+		sfx:stop(bgMusic)
 	end
 end
 
@@ -389,7 +423,8 @@ function scene:destroy( event )
 	-- local explosionSound
 	-- local fireSound
 	-- local bgMusic
-	audio.dispose(explosionSound); audio.dispose(fireSound); audio.dispose(bgMusic);
+	-- audio.dispose(explosionSound); audio.dispose(fireSound); 
+	audio.dispose(bgMusic);
 end
 
 

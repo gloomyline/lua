@@ -7,40 +7,38 @@ local scene = composer.newScene()
 -- Code outside of the scene event functions below will only be executed ONCE unless
 -- the scene is removed entirely (not recycled) via "composer.removeScene()"
 -- -----------------------------------------------------------------------------------
-
--- declare the bgMusic of this scene
 local bgMusic
 
-local function gotoGame(  )
-	composer.removeScene('game')
-	composer.gotoScene('game', 
-		{
-			time = 800, 
-			effect = 'crossFade',
-		}
+local background
+local settingsHeader
+local soundTxt
+local soundSwitchBtn
+local returnBtn
+
+local function returnToMenu(  )
+	composer.removeScene('menu')
+	composer.gotoScene('menu', 
+		{time = 800, effect = 'crossFade'}
 	)
 end
 
-local function gotoSettings(  )
-	composer.removeScene('settings')
-	composer.gotoScene('settings', 
-		{
-			time = 800, 
-			effect = 'crossFade',
-		}
-	)
+local function switchTheSound(  )
+	if isSoundOn then
+		isSoundOn = false
+		soundSwitchBtn.text = 'Turn On'
+		if bgMusic and bgMusic ~= nil then
+			sfx:pause(bgMusic)
+		end
+	else
+		isSoundOn = true
+		soundSwitchBtn.text = 'Turn Off'
+		if bgMusic and bgMusic ~= nil then
+			sfx:resume(bgMusic)
+		elseif not bgMusic then		
+			bgMusic = sfx:play('bgHighScores', {loops = -1})
+		end
+	end
 end
-
-local function gotoHighScores(  )
-	composer.removeScene('highScores')
-	composer.gotoScene('highScores', 
-		{
-			time = 800,
-			effect = 'crossFade',
-		}
-	)
-end
-
 
 -- -----------------------------------------------------------------------------------
 -- Scene event functions
@@ -51,30 +49,34 @@ function scene:create( event )
 
 	local sceneGroup = self.view
 	-- Code here runs when the scene is first created but has not yet appeared on screen
-
 	local background = display.newImageRect(sceneGroup, 'assets/background.png', 800, 1400)
 	background.x = cX
 	background.y = cY
 
-	local title = display.newImageRect(sceneGroup, 'assets/title.png', 500, 80)
-	title.x = cX
-	title.y = 240
+	settingsHeader = display.newText(sceneGroup, 'Settings', cX, cY - 100, native.systemFont, 40)
+	settingsHeader:setFillColor(0.7)
 
-	local playBtn = display.newText(sceneGroup, 'Play', cX, 600, native.systemFont, 40)
-	playBtn:setFillColor(0.82, 0.86, 1)
+	soundTxt = display.newText(sceneGroup, 'Sounds:', cX - 180, cY + 100, native.systemFont, 40)
+	soundTxt:setFillColor(0.7)
+	soundTxt.anchorX = 1
 
-	local settingsBtn = display.newText(sceneGroup, 'Settings', cX, 700, native.systemFont, 40)
-	settingsBtn:setFillColor(0.75, 0.80, 1)
+	local soundSwitchBtnTxt
+	if isSoundOn then
+		soundSwitchBtnTxt = 'Turn Off'
+	else
+		soundSwitchBtnTxt = 'Turn On'
+	end
+	soundSwitchBtn = display.newText(sceneGroup, soundSwitchBtnTxt, cX + 100, cY + 100, native.systemFont, 40)
+	soundSwitchBtn:setFillColor(0.7)
+	soundTxt.anchorX = 0
 
-	local highScoresBtn = display.newText(sceneGroup, 'HighScores', cX, 800, native.systemFont, 40)
-	highScoresBtn:setFillColor(0.75, 0.78, 1)
+	returnBtn = display.newText(sceneGroup, 'Return', cX, cY + 240, native.systemFont, 40)
+	returnBtn:setFillColor(0.7)
 
-	playBtn:addEventListener('tap', gotoGame)
-	settingsBtn:addEventListener('tap', gotoSettings)
-	highScoresBtn:addEventListener('tap', gotoHighScores)
-
-	-- bgMusic = audio.loadStream('audio/Midnight-Crawlers_Looping.wav')
+	soundSwitchBtn:addEventListener('tap', switchTheSound)
+	returnBtn:addEventListener('tap', returnToMenu)
 end
+
 
 -- show()
 function scene:show( event )
@@ -87,10 +89,7 @@ function scene:show( event )
 
 	elseif ( phase == "did" ) then
 		-- Code here runs when the scene is entirely on screen
-
-		-- start bgMusic
-		-- audio.play(bgMusic, {channel = 2, loops = -1})
-		bgMusic = sfx:play('bgMenu', {loops = -1})
+		bgMusic = sfx:play('bgHighScores', {loops = -1})
 	end
 end
 
@@ -106,9 +105,6 @@ function scene:hide( event )
 
 	elseif ( phase == "did" ) then
 		-- Code here runs immediately after the scene goes entirely off screen
-
-		-- stop bgMusic
-		-- audio.stop(2)
 		sfx:stop(bgMusic)
 	end
 end
@@ -119,9 +115,7 @@ function scene:destroy( event )
 
 	local sceneGroup = self.view
 	-- Code here runs prior to the removal of scene's view
-
-	-- dispose bgMusic
-	audio.dispose(bgMusic)
+	sfx:dispose(bgMusic)
 end
 
 
