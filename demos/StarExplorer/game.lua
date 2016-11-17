@@ -74,10 +74,9 @@ for i = 1, levels do
 end
 
 -- reserve asteroids in the table
-local asteroidsTalbe = {}
+local asteroidsTalbe
 
 local ship
-local gameLoopTime
 local livesText 
 local scoreText
 local levelText
@@ -86,6 +85,7 @@ local backGroup
 local mainGroup
 local uiGroup
 
+local fireLoopTimer
 local gameLoopTimer
 
 -- sounds
@@ -95,8 +95,9 @@ local bgMusic
 
 -- update lives and score
 local function updateText()
-	livesText = 'Lives' .. lives
-	scoreText = 'score' .. score
+	livesText.text = 'Lives:' .. lives
+	scoreText.text = 'Score:' .. score
+	levelText.text = 'Level:' .. curLevel
 end
 
 -- creating asteroids
@@ -158,6 +159,28 @@ local function fireLaser()
 	)
 end
 
+-- firing mechanics sostenuto
+local function fireLasers( event )
+
+	local phase = event.phase
+
+	if not died then
+		if phase == 'began' then
+			if not fireLoopTimer then
+				-- start the timer to fire laser sostenuto
+				fireLoopTimer = timer.performWithDelay(200, fireLaser, 0)
+			elseif fireLoopTimer and fireLoopTimer ~= 0 then
+				timer.resume(fireLoopTimer)
+			end
+		elseif phase == 'ended' or phase == 'canceled' then
+			timer.pause(fireLoopTimer)
+		end
+	end	
+
+	-- prevent the propagation
+	return true
+end
+
 -- moving the ship
 local function dragShip(event)
 	-- get target and phase of event
@@ -210,7 +233,14 @@ local function isLevelUp(  )
 	if score >= levelUpScoresTable[#levelUpScoresTable] then return end
 	if score >= levelUpScoresTable[curLevel] then
 		curLevel = curLevel + 1
-		levelText.text = 'Level:' .. curLevel
+		updateText()
+
+		-- release the previous timer
+		if gameLoopTimer then
+			timer.cancel(gameLoopTimer)
+		end
+
+		-- start a new timer
 		gameLoopTimer = timer.performWithDelay(1000 - curLevel * 100, gameLoop, 0)
 	end
 end
@@ -232,6 +262,7 @@ local function restoreShip( )
 			onComplete = function (	)
 				ship.isBodyActive = true
 				died = false
+				-- ship:addEventListener('touch', fireLasers)
 			end
 		}
 	)
@@ -288,7 +319,7 @@ local function onCollision( event )
 
 			-- increase score
 			score = score + 1
-			scoreText.text = 'Score:' .. score
+			updateText()
 			isLevelUp()
 		end
 
@@ -298,12 +329,14 @@ local function onCollision( event )
 		then
 			if died == false then
 				died = true
+				-- ship:removeEventListener('touch', fireLasers)
+
 				-- audio.play(explosionSound)
 				sfx:play('explosionSound')
 			
 				-- updateLives
 				lives = lives - 1
-				livesText.text = 'Lives:' .. lives
+				updateText()
 
 				if lives == 0 then
 					display.remove(ship)
@@ -332,6 +365,9 @@ function scene:create( event )
 	-- pause the physics engine temporarily
 	physics.pause()
 
+	-- initialize table to reserve asteroids
+	asteroidsTalbe = {}
+
 	-- set up display groups
 	backGroup = display.newGroup()
 	mainGroup = display.newGroup()
@@ -354,15 +390,13 @@ function scene:create( event )
 	levelText = display.newText(uiGroup, 'Level:' .. curLevel, 600, 80, native.systemFont, 36)
 
 	-- assign the ship 'tap' event to let the player actually fire lasers
-	ship:addEventListener('tap',fireLaser)
+	ship:addEventListener('tap', fireLaser)
+
+	-- assign the ship 'touch' event to let the player fire lasers sostenuto
+	ship:addEventListener('touch', fireLasers)
 
 	-- assign the ship 'touch' event to let the player actually move ship
 	ship:addEventListener('touch', dragShip)
-
-	-- load sounds about explosion and fire into game
-	-- explosionSound = audio.loadSound('audio/explosion.wav')
-	-- fireSound = audio.loadSound('audio/fire.wav')
-	-- bgMusic = audio.loadStream('audio/80s-Space-Game_Looping.wav')
 end
 
 
@@ -399,6 +433,7 @@ function scene:hide( event )
 
 	if ( phase == "will" ) then
 		-- Code here runs when the scene is on screen (but is about to go off screen)
+		timer.cancel(fireLoopTimer)
 		timer.cancel(gameLoopTimer)
 
 	elseif ( phase == "did" ) then
