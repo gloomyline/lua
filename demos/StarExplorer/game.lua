@@ -86,7 +86,9 @@ local mainGroup
 local uiGroup
 
 local fireLoopTimer
+local timerPauseRes = false		-- fireLoopTimer puase flag to demind the timer is puased or not
 local gameLoopTimer
+local gameLoopTimersTalbe		-- the table to reserve gameLoopTimer Id
 
 -- sounds
 local explosionSound
@@ -161,21 +163,24 @@ end
 
 -- firing mechanics sostenuto
 local function fireLasers( event )
+	if died and fireLoopTimer._removed == nil then
+		timer.pause(fireLoopTimer)
+	end
 
 	local phase = event.phase
 
-	if not died then
-		if phase == 'began' then
-			if not fireLoopTimer then
-				-- start the timer to fire laser sostenuto
-				fireLoopTimer = timer.performWithDelay(200, fireLaser, 0)
-			elseif fireLoopTimer and fireLoopTimer ~= 0 then
-				timer.resume(fireLoopTimer)
-			end
-		elseif phase == 'ended' or phase == 'canceled' then
+	if phase == 'began' then
+		if not fireLoopTimer then
+			-- start the timer to fire laser sostenuto
+			fireLoopTimer = timer.performWithDelay(200, fireLaser, 0)
+		elseif fireLoopTimer and fireLoopTimer ~= 0 then
+			timer.resume(fireLoopTimer)
+		end
+	elseif phase == 'ended' then
+		if fireLoopTimer._removed == nil then
 			timer.pause(fireLoopTimer)
 		end
-	end	
+	end
 
 	-- prevent the propagation
 	return true
@@ -235,13 +240,9 @@ local function isLevelUp(  )
 		curLevel = curLevel + 1
 		updateText()
 
-		-- release the previous timer
-		if gameLoopTimer then
-			timer.cancel(gameLoopTimer)
-		end
-
-		-- start a new timer
+		-- start a timer
 		gameLoopTimer = timer.performWithDelay(1000 - curLevel * 100, gameLoop, 0)
+		table.insert(gameLoopTimersTalbe, gameLoopTimer)
 	end
 end
 
@@ -368,6 +369,9 @@ function scene:create( event )
 	-- initialize table to reserve asteroids
 	asteroidsTalbe = {}
 
+	-- initialize table to re
+	gameLoopTimersTalbe = {}
+
 	-- set up display groups
 	backGroup = display.newGroup()
 	mainGroup = display.newGroup()
@@ -412,15 +416,17 @@ function scene:show( event )
 	elseif ( phase == "did" ) then
 		-- Code here runs when the scene is entirely on screen
 		physics.start()
+
 		-- collision listener
 		Runtime:addEventListener('collision', onCollision)
+
 		-- game loop timer
 		gameLoopTimer = timer.performWithDelay(1000, gameLoop, 0)
-
+		table.insert(gameLoopTimersTalbe, gameLoopTimer)
+		
 		-- start bgMusic
 		-- audio.play(bgMusic, {channel = 1, loops = -1})
 		bgMusic = sfx:play('bgGame', {loops = -1})
-		
 	end
 end
 
@@ -434,7 +440,12 @@ function scene:hide( event )
 	if ( phase == "will" ) then
 		-- Code here runs when the scene is on screen (but is about to go off screen)
 		timer.cancel(fireLoopTimer)
-		timer.cancel(gameLoopTimer)
+
+		-- release the gameLoopTiemrs
+		-- timer.cancel(gameLoopTimer)
+		for i,v in ipairs(gameLoopTimersTalbe) do
+			timer.cancel(v)
+		end
 
 	elseif ( phase == "did" ) then
 		-- Code here runs immediately after the scene goes entirely off screen
